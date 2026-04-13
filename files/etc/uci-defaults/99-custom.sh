@@ -57,23 +57,23 @@ if [ "$count" -eq 1 ]; then
     uci commit network
 elif [ "$count" -gt 1 ]; then
     # 多网口：X86 4口
-    # 配置 WAN (eth2)
-    uci set network.wan=interface
-    uci set network.wan.device="$wan_ifname"
-    uci set network.wan.proto='dhcp'
+    # 配置 iptv (eth2)
+    uci set network.iptv=interface
+    uci set network.iptv.device="$wan_ifname"
+    uci set network.iptv.proto='dhcp'
 
     uci set network.wan6=interface
     uci set network.wan6.device="$wan_ifname"
     uci set network.wan6.proto='dhcpv6'
 
-    # 配置 WAN2 (eth3)
-    uci set network.wan2=interface
-    uci set network.wan2.device="eth3"
-    uci set network.wan2.proto='dhcp'
+    # 配置 WAN (eth3)
+    uci set network.wan=interface
+    uci set network.wan.device="eth3"
+    uci set network.wan.proto='dhcp'
 
-    uci set network.wan26=interface
-    uci set network.wan26.device="eth3"
-    uci set network.wan26.proto='dhcpv6'
+    uci set network.wan=interface
+    uci set network.wan.device="eth3"
+    uci set network.wan.proto='dhcpv6'
 
     # 配置 br-lan
     section=$(uci show network | awk -F '[.=]' '/\.@?device\[\d+\]\.name=.br-lan.$/ {print $2; exit}')
