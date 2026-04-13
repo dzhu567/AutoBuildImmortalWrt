@@ -1,6 +1,6 @@
 #!/bin/sh
 # 99-custom.sh immortalwrt 固件首次启动脚本
-# X86 4网口专用：eth0 eth1 = LAN；eth2 eth3 = WAN
+# X86 4网口专用：eth0 eth1 = LAN；eth2 = IPTV；eth3 = WAN
 # Log file for debugging
 LOGFILE="/etc/config/uci-defaults-log.txt"
 echo "Starting 99-custom.sh at $(date)" >>$LOGFILE
@@ -39,12 +39,12 @@ echo "Interface count: $count" >>$LOGFILE
 board_name=$(cat /tmp/sysinfo/board_name 2>/dev/null || echo "unknown")
 echo "Board detected: $board_name" >>$LOGFILE
 
-# 2. X86 4网口固定配置：eth0 eth1=LAN，eth2 eth3=WAN
-wan_ifname=""
-lan_ifnames=""
+# 2. X86 4网口固定配置：eth0 eth1=LAN，eth2=IPTV，eth3=WAN
 lan_ifnames="eth0 eth1"
-wan_ifname="eth2"
-echo "Using X86 4-port fixed mapping: LAN=$lan_ifnames, WAN=$wan_ifname" >>"$LOGFILE"
+iptv_ifname="eth2"
+wan_ifname="eth3"
+
+echo "Using X86 4-port fixed mapping: LAN=$lan_ifnames, IPTV=$iptv_ifname, WAN=$wan_ifname" >>"$LOGFILE"
 
 # 3. 配置网络
 if [ "$count" -eq 1 ]; then
@@ -57,23 +57,19 @@ if [ "$count" -eq 1 ]; then
     uci commit network
 elif [ "$count" -gt 1 ]; then
     # 多网口：X86 4口
-    # 配置 iptv (eth2)
+    # 配置 IPTV (eth2)
     uci set network.iptv=interface
-    uci set network.iptv.device="$wan_ifname"
+    uci set network.iptv.device="$iptv_ifname"
     uci set network.iptv.proto='dhcp'
+
+    # 配置 WAN (eth3) —— 上网口
+    uci set network.wan=interface
+    uci set network.wan.device="$wan_ifname"
+    uci set network.wan.proto='dhcp'
 
     uci set network.wan6=interface
     uci set network.wan6.device="$wan_ifname"
     uci set network.wan6.proto='dhcpv6'
-
-    # 配置 WAN (eth3)
-    uci set network.wan=interface
-    uci set network.wan.device="eth3"
-    uci set network.wan.proto='dhcp'
-
-    uci set network.wan=interface
-    uci set network.wan.device="eth3"
-    uci set network.wan.proto='dhcpv6'
 
     # 配置 br-lan
     section=$(uci show network | awk -F '[.=]' '/\.@?device\[\d+\]\.name=.br-lan.$/ {print $2; exit}')
@@ -100,7 +96,7 @@ elif [ "$count" -gt 1 ]; then
         echo "default router ip is 192.168.1.1" >> $LOGFILE
     fi
 
-    # PPPoE 设置（只作用在 wan=eth2）
+    # PPPoE 设置（只作用在 wan=eth3）
     echo "enable_pppoe value: $enable_pppoe" >>$LOGFILE
     if [ "$enable_pppoe" = "yes" ]; then
         echo "PPPoE enabled, configuring..." >>$LOGFILE
